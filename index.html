@@ -240,24 +240,51 @@ function initParticles(){
 }
 
 // ============================================================
-// 留言備忘錄 — 由小愛更新（老闆口述我來寫）
+// 留言備忘錄 — 自動服裝提醒 + 老闆留言
 // ============================================================
-// 初始備忘錄內容（空）
-let currentMemo = '';
+let bossMemo = '';   // 老闆留言（若有的話會覆蓋自動提醒）
+
+function getDailyDressCode() {
+  var d = new Date().getDay(); // 0=日, 1=一, 2=二, 3=三, 4=四, 5=五, 6=六
+  var calendar = '📅 ';
+
+  switch(d) {
+    case 0: // 週日
+      return calendar + '今天是星期日，好好休息！';
+    case 1: // 週一
+      return '👔 今天是星期一\n記得穿【制服】！';
+    case 2: // 週二
+      return '🏃 今天是星期二\n記得穿【運動服】！';
+    case 3: // 週三
+      return '📋 今天是星期三\n沒有服裝規定，輕鬆上班！';
+    case 4: // 週四
+      return '👔 今天是星期四\n記得穿【制服】！';
+    case 5: // 週五
+      return '🏃 今天是星期五\n記得穿【運動服】！';
+    case 6: // 週六
+      return calendar + '今天是星期六，祝您週末愉快！';
+  }
+}
 
 function renderMemo() {
-  if (currentMemo && currentMemo.trim()) {
-    memoContent.textContent = currentMemo;
-    memoContent.className = 'memo-content';
+  var autoMsg = getDailyDressCode();
+
+  if (bossMemo && bossMemo.trim()) {
+    // 老闆留言 + 自動提醒（若有）
+    var finalText = bossMemo;
+    if (autoMsg) finalText = autoMsg + '\n\n📌 ' + finalText;
+    memoContent.textContent = finalText;
+  } else if (autoMsg) {
+    memoContent.textContent = autoMsg;
   } else {
     memoContent.innerHTML = '<div class="memo-empty">目前無留言<br>告訴小愛，我來幫您記錄 ✏️</div>';
   }
 }
 
-// 老闆呼叫此函數來更新備忘錄
+// 老闆呼叫此函數來更新備忘錄（會保留自動服裝提醒）
 // 用法：updateMemo("留言內容");
 function updateMemo(text) {
-  currentMemo = text;
+  bossMemo = text;
   renderMemo();
   var n = new Date();
   var y = n.getFullYear(), mo = n.getMonth()+1, d = n.getDate();

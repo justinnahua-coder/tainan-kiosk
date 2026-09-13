@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kiosk 時鐘・天氣・待辦</title>
+<title>Kiosk 時鐘・天氣・備忘錄</title>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -24,7 +24,6 @@
   .particle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); animation: float linear infinite; }
   @keyframes float { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:.6} 90%{opacity:.4} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
 
-  /* 左右佈局 */
   .layout {
     position: relative; z-index: 2;
     display: flex; width: 100%; height: 100%;
@@ -77,11 +76,11 @@
     align-items: flex-start; justify-content: center;
   }
 
-  /* ========== 右側（待辦事項） ========== */
+  /* ========== 右側（留言備忘錄） ========== */
   .right-panel {
     flex: 0 0 45%;
     display: flex; flex-direction: column;
-    padding: 2.5% 3% 2.5% 1%;
+    padding: 2.5% 3% 2.5% 1.5%;
     background: rgba(255,255,255,.06);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border-radius: 28px;
@@ -90,100 +89,43 @@
     margin: 1.5% 0;
   }
 
-  .todo-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 .5em .6em .5em;
-    border-bottom: 1px solid rgba(255,255,255,.10);
-    margin-bottom: .6em;
-  }
-  .todo-title {
+  .memo-header {
     font-size:clamp(1rem,2.8vw,1.5rem);font-weight:600;letter-spacing:.06em;
+    padding: 0 .3em .5em .3em;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    flex-shrink: 0;
   }
-  .todo-count {
-    font-size:clamp(.7rem,1.8vw,.9rem);opacity:.5;
-    background:rgba(255,255,255,.08);padding:.2em .8em;border-radius:16px;
+  .memo-header small {
+    font-weight:300; font-size:.55em; opacity:.45; margin-left:.6em;
   }
 
-  .todo-list {
+  .memo-content {
     flex: 1; overflow-y: auto;
-    padding-right: .3em;
+    padding: .6em .3em;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,.15) transparent;
-  }
-  .todo-list::-webkit-scrollbar { width: 4px; }
-  .todo-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
-
-  .todo-item {
-    display: flex; align-items: center; gap: .6em;
-    padding: .5em .5em;
-    border-radius: 12px;
-    transition: background .2s;
-    font-size:clamp(.75rem,2vw,1rem);
-    margin-bottom: .15em;
-  }
-  .todo-item:hover { background: rgba(255,255,255,.05); }
-
-  .todo-check {
-    width: 1.1em; height: 1.1em; flex-shrink: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.4);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all .2s;
-  }
-  .todo-check.done {
-    background: rgba(100,220,100,.6);
-    border-color: rgba(100,220,100,.8);
-  }
-  .todo-check.done::after {
-    content: '✓'; font-size: .75em; color: #fff; font-weight: 700;
-  }
-
-  .todo-text {
-    flex: 1; line-height: 1.4;
+    font-size:clamp(.95rem,2.6vw,1.4rem);
+    line-height: 1.6;
+    letter-spacing: .04em;
     word-break: break-word;
+    white-space: pre-wrap;
   }
-  .todo-text.done {
-    text-decoration: line-through; opacity: .45;
-  }
+  .memo-content::-webkit-scrollbar { width: 4px; }
+  .memo-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
 
-  .todo-tag {
-    font-size: .6em; padding: .15em .6em; border-radius: 10px;
-    flex-shrink: 0; letter-spacing: .03em;
-  }
-  .tag-work    { background: rgba(54,162,235,.30); }
-  .tag-personal{ background: rgba(255,206,86,.25); }
-  .tag-urgent  { background: rgba(255,99,132,.30); }
-  .tag-other   { background: rgba(153,102,255,.25); }
-
-  .todo-add {
-    display: flex; gap: .5em; margin-top: .6em; padding: 0 .3em;
-  }
-  .todo-add-input {
-    flex: 1;
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px; padding: .5em .8em;
-    color: #fff; font-size:clamp(.7rem,1.8vw,.9rem);
-    font-family: inherit; outline: none;
-    transition: border .2s;
-  }
-  .todo-add-input::placeholder { color: rgba(255,255,255,.3); }
-  .todo-add-input:focus { border-color: rgba(255,255,255,.3); }
-
-  .todo-add-btn {
-    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
-    border-radius: 14px; padding: .4em .9em;
-    color: #fff; font-size:clamp(.7rem,1.8vw,.9rem);
-    cursor: pointer; transition: background .2s;
-    font-family: inherit; white-space: nowrap;
-  }
-  .todo-add-btn:hover { background: rgba(255,255,255,.20); }
-
-  .todo-empty {
-    text-align: center; opacity: .3; font-size:clamp(.7rem,1.8vw,.9rem);
+  .memo-empty {
+    text-align: center; opacity: .25; font-size:clamp(.8rem,2vw,1rem);
     padding: 2em 0; letter-spacing:.04em;
   }
 
-  /* ===== 響應式 - 直立手機 ===== */
+  .memo-updated {
+    font-size:clamp(.5rem,1.4vw,.7rem); opacity:.25;
+    padding: .4em .3em 0 .3em;
+    border-top: 1px solid rgba(255,255,255,.06);
+    flex-shrink: 0;
+  }
+
+  /* ===== 響應式 ===== */
   @media (max-width: 600px) {
     .layout { flex-direction: column; padding: 3% 4%; }
     .left-panel { padding: 1% 0; align-items: center; }
@@ -215,40 +157,38 @@
         <div class="weather-desc" id="weatherDesc">載入中…</div>
         <div class="weather-extras"><span>💧 <span id="humidity">--</span>%</span><span>🌬️ <span id="windSpeed">--</span> km/h</span></div>
       </div>
-    </div>  <!-- .weather-row -->
+    </div>
 
     </div>  <!-- .left-center -->
 
     <div class="bottom-bar"><span>📍 台南</span>　<span>🔄 <span id="lastUpdate">--</span></span></div>
   </div>
 
-  <!-- ====== 右側 ====== -->
-  <div class="right-panel" id="todoPanel">
-    <div class="todo-header">
-      <span class="todo-title">📋 待辦事項</span>
-      <span class="todo-count" id="todoCount">0 項</span>
+  <!-- ====== 右側（留言備忘錄） ====== -->
+  <div class="right-panel" id="memoPanel">
+    <div class="memo-header">
+      📝 留言備忘錄
+      <small>由小愛更新</small>
     </div>
 
-    <div class="todo-list" id="todoList">
-      <div class="todo-empty">暫無待辦事項<br>下方輸入新增 ✏️</div>
+    <div class="memo-content" id="memoContent">
+      <div class="memo-empty">目前無留言<br>告訴小愛，我來幫您記錄 ✏️</div>
     </div>
 
-    <div class="todo-add">
-      <input class="todo-add-input" id="todoInput" placeholder="新增待辦事項..." maxlength="120">
-      <button class="todo-add-btn" id="todoAddBtn">＋ 新增</button>
-    </div>
+    <div class="memo-updated" id="memoUpdated"></div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// 萬年曆 & 時鐘 & 天氣 (同前，略縮)
+// 萬年曆 & 時鐘 & 天氣
 // ============================================================
 const $=id=>document.getElementById(id);
 const bgLayer=$('bgLayer'),dateSolar=$('dateSolar'),dateLunar=$('dateLunar'),festivalEl=$('festivalBadge');
 const hoursEl=$('hours'),minutesEl=$('minutes'),secondsEl=$('seconds');
 const tempEl=$('temp'),descEl=$('weatherDesc'),iconEl=$('weatherIcon');
 const humidityEl=$('humidity'),windEl=$('windSpeed'),updateEl=$('lastUpdate');
+const memoContent=$('memoContent'),memoUpdated=$('memoUpdated');
 
 const SOLAR_FEST={'1/1':'🔴 元旦','2/28':'🔴 和平紀念日','3/8':'🎉 婦女節','3/12':'🎉 植樹節','4/4':'🎉 兒童節','5/1':'🔴 勞動節','9/3':'🎉 軍人節','9/28':'🎉 教師節','10/10':'🔴 國慶日','10/25':'🎉 臺灣光復節','11/12':'🎉 國父誕辰','12/25':'🎉 行憲紀念日'};
 const LUNAR_FEST_NM={'1/1':'🔴 春節','1/9':'🎉 天公生','1/15':'🎉 元宵節','2/2':'🎉 龍抬頭','3/3':'🎉 上巳節','4/8':'🎉 浴佛節','5/5':'🔴 端午節','7/7':'🎉 七夕','7/15':'🎉 中元節','8/15':'🔴 中秋節','9/9':'🎉 重陽節','12/8':'🎉 臘八節','12/16':'🎉 尾牙','12/24':'🎉 送神','12/30':'🔴 除夕','12/29':'🔴 除夕'};
@@ -262,7 +202,6 @@ const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];const DZ=
 function JD(y,m,d){if(m<=2){y--;m+=12;}var A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;}
 function md(idx,mi,leap){var info=LI[idx];if(leap) return ((info>>20)&1)?30:29;return ((info>>(11-(mi-1)))&1)?30:29;}
 function gl(idx){return(LI[idx]>>16)&0xF;}
-
 function s2l(sy,sm,sd){
   var tj=JD(sy,sm,sd),ly=1900,idx=0;
   while(idx<NY.length-1&&JD(NY[idx+1][0],NY[idx+1][1],NY[idx+1][2])<=tj){idx++;ly++;}
@@ -274,7 +213,6 @@ function s2l(sy,sm,sd){
   var dgz=Math.floor(tj+0.5)%60;if(dgz<0)dgz+=60;
   return {year:ly,month:lm,day:ld,isLeap:isleap,gzY:TG[gn]+DZ[ge],sx:SX[ge],gzD:TG[dgz%10]+DZ[dgz%12]+'日',jq:getJQ(sy,sm,sd)};
 }
-
 function getJQ(y,m,d){var n=['立春','雨水','驚蟄','春分','清明','穀雨','立夏','小滿','芒種','夏至','小暑','大暑','立秋','處暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至','小寒','大寒'];var b=[[2,3],[2,18],[3,5],[3,20],[4,4],[4,20],[5,5],[5,21],[6,5],[6,21],[7,7],[7,22],[8,7],[8,23],[9,7],[9,23],[10,8],[10,23],[11,7],[11,22],[12,7],[12,21],[1,5],[1,20]];var o=Math.round((y-2025)*0.2422);for(var i=0;i<24;i++){if(b[i][0]===m&&Math.round(b[i][1]+o)===d)return n[i];}return null;}
 function getFest(sm,sd,lm,ld,il,jq){var k=sm+'/'+sd;if(SOLAR_FEST[k])return SOLAR_FEST[k];if(!il){var lk=lm+'/'+ld;if(LUNAR_FEST_NM[lk])return LUNAR_FEST_NM[lk];}if(jq)return '🎋 '+jq;return null;}
 function bgC(h){if(h>=5&&h<8)return'bg-dawn';if(h>=8&&h<17)return'bg-day';if(h>=17&&h<19)return'bg-sunset';return'bg-night';}
@@ -302,100 +240,34 @@ function initParticles(){
 }
 
 // ============================================================
-// 待辦事項 (localStorage 持久化)
+// 留言備忘錄 — 由小愛更新（老闆口述我來寫）
 // ============================================================
-const TODO_STORAGE_KEY = 'tainan_kiosk_todos';
+// 初始備忘錄內容（空）
+let currentMemo = '';
 
-// 初始範例資料
-const DEFAULT_TODOS = [
-  { id: '1', text: '拜訪客戶 - 龍星顯示', done: false, tag: 'work' },
-  { id: '2', text: '整理報價單', done: false, tag: 'work' },
-  { id: '3', text: '採購 Mean Well 电源', done: true, tag: 'work' },
-  { id: '4', text: '買牛奶', done: false, tag: 'personal' },
-  { id: '5', text: '回覆供應商郵件', done: false, tag: 'urgent' },
-];
-
-let todos = [];
-
-function loadTodos() {
-  try {
-    var saved = localStorage.getItem(TODO_STORAGE_KEY);
-    if (saved) { todos = JSON.parse(saved); }
-    else { todos = DEFAULT_TODOS; saveTodos(); }
-  } catch(e) { todos = DEFAULT_TODOS; }
-  renderTodos();
-}
-
-function saveTodos() {
-  try { localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos)); }
-  catch(e) { /* ignore */ }
-}
-
-function renderTodos() {
-  var list = $('todoList');
-  var count = $('todoCount');
-  var doneCount = todos.filter(t => t.done).length;
-  count.textContent = todos.length + ' 項（' + doneCount + ' 完成）';
-
-  if (todos.length === 0) {
-    list.innerHTML = '<div class="todo-empty">暫無待辦事項<br>下方輸入新增 ✏️</div>';
-    return;
+function renderMemo() {
+  if (currentMemo && currentMemo.trim()) {
+    memoContent.textContent = currentMemo;
+    memoContent.className = 'memo-content';
+  } else {
+    memoContent.innerHTML = '<div class="memo-empty">目前無留言<br>告訴小愛，我來幫您記錄 ✏️</div>';
   }
-
-  var html = '';
-  for (var i = 0; i < todos.length; i++) {
-    var t = todos[i];
-    var tagMap = { work: '工作', personal: '個人', urgent: '緊急', other: '其他' };
-    var tagClass = t.tag || 'other';
-    html += '<div class="todo-item" data-idx="' + i + '">'
-      + '<div class="todo-check' + (t.done ? ' done' : '') + '" data-idx="' + i + '"></div>'
-      + '<span class="todo-text' + (t.done ? ' done' : '') + '">' + escapeHtml(t.text) + '</span>'
-      + '<span class="todo-tag tag-' + tagClass + '">' + (tagMap[tagClass] || '其他') + '</span>'
-      + '</div>';
-  }
-  list.innerHTML = html;
-
-  // 點擊切換
-  list.querySelectorAll('.todo-check').forEach(function(el){
-    el.addEventListener('click', function(e){
-      var idx = parseInt(this.dataset.idx);
-      todos[idx].done = !todos[idx].done;
-      saveTodos(); renderTodos();
-      e.stopPropagation();
-    });
-  });
-  // 點擊項目切換
-  list.querySelectorAll('.todo-item').forEach(function(el){
-    el.addEventListener('click', function(e){
-      if (e.target.classList.contains('todo-check')) return;
-      var idx = parseInt(this.dataset.idx);
-      todos[idx].done = !todos[idx].done;
-      saveTodos(); renderTodos();
-    });
-  });
 }
 
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// 老闆呼叫此函數來更新備忘錄
+// 用法：updateMemo("留言內容");
+function updateMemo(text) {
+  currentMemo = text;
+  renderMemo();
+  var n = new Date();
+  var y = n.getFullYear(), mo = n.getMonth()+1, d = n.getDate();
+  var h = n.getHours(), mi = n.getMinutes();
+  memoUpdated.textContent = '📅 最後更新：' + y + '年' + mo + '月' + d + '日 ' + P2(h) + ':' + P2(mi);
 }
 
-function addTodo() {
-  var input = $('todoInput');
-  var text = input.value.trim();
-  if (!text) return;
-  todos.unshift({ id: Date.now() + '', text: text, done: false, tag: 'other' });
-  input.value = '';
-  saveTodos(); renderTodos();
-}
-
-// 監聽 Enter
-$('todoInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') addTodo(); });
-$('todoAddBtn').addEventListener('click', addTodo);
-
-// ============================================================
 // 啟動
-// ============================================================
-updateClock(); updateWeather(); initParticles(); loadTodos();
+updateClock(); updateWeather(); initParticles();
+renderMemo();
 setInterval(updateClock, 500); setInterval(updateWeather, 600000);
 </script>
 </body>

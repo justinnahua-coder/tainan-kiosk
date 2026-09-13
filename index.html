@@ -34,9 +34,9 @@
 
   /* ========== 左側 ========== */
   .left-panel {
-    flex: 0 0 55%;
+    flex: 1;
     display: flex; flex-direction: column;
-    align-items: flex-start; justify-content: center;
+    align-items: flex-start;
     padding: 2% 4%;
   }
   .date-solar { font-size:clamp(1rem,3vw,1.6rem);font-weight:400;letter-spacing:.10em;opacity:.9;margin-bottom:.3em; }
@@ -66,8 +66,15 @@
   .weather-desc { font-size:clamp(.75rem,2.2vw,1.1rem);font-weight:400;opacity:.8;letter-spacing:.04em; }
   .weather-extras { display:flex;gap:8%;font-size:clamp(.6rem,1.8vw,.9rem);opacity:.6;margin-top:.15em; }
 
-  .bottom-left {
-    font-size:clamp(.5rem,1.4vw,.7rem);opacity:.3;margin-top:.5em;letter-spacing:.03em;
+  .bottom-bar {
+    margin-top: auto;
+    font-size:clamp(.5rem,1.4vw,.7rem);opacity:.3;letter-spacing:.03em;
+  }
+
+  .left-center {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
   }
 
   /* ========== 右側（待辦事項） ========== */
@@ -179,7 +186,8 @@
   /* ===== 響應式 - 直立手機 ===== */
   @media (max-width: 600px) {
     .layout { flex-direction: column; padding: 3% 4%; }
-    .left-panel { flex: none; padding: 1% 0; align-items: center; }
+    .left-panel { padding: 1% 0; align-items: center; }
+    .left-center { align-items: center; }
     .right-panel { flex: 1; padding: 4% 4%; margin: 2% 0 0 0; }
   }
 </style>
@@ -191,6 +199,7 @@
 <div class="layout">
   <!-- ====== 左側 ====== -->
   <div class="left-panel">
+    <div class="left-center">
     <div class="date-solar" id="dateSolar"></div>
     <div class="date-lunar" id="dateLunar">載入中…</div>
     <div class="festival-badge none" id="festivalBadge">🎉 </div>
@@ -206,9 +215,11 @@
         <div class="weather-desc" id="weatherDesc">載入中…</div>
         <div class="weather-extras"><span>💧 <span id="humidity">--</span>%</span><span>🌬️ <span id="windSpeed">--</span> km/h</span></div>
       </div>
-    </div>
+    </div>  <!-- .weather-row -->
 
-    <div class="bottom-left"><span>📍 台南</span>　<span>🔄 <span id="lastUpdate">--</span></span></div>
+    </div>  <!-- .left-center -->
+
+    <div class="bottom-bar"><span>📍 台南</span>　<span>🔄 <span id="lastUpdate">--</span></span></div>
   </div>
 
   <!-- ====== 右側 ====== -->

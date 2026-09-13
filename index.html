@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kiosk 時鐘・天氣・萬年曆</title>
+<title>Kiosk 時鐘・天氣・待辦</title>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Segoe UI', -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
     height: 100vh; width: 100vw;
     overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
     color: #fff;
     background: #0f0c29;
     user-select: none; -webkit-user-select: none;
@@ -23,48 +23,216 @@
   .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
   .particle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.08); animation: float linear infinite; }
   @keyframes float { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:.6} 90%{opacity:.4} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
-  .container { position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:4% 6%;text-shadow:0 2px 20px rgba(0,0,0,.25); }
-  .date-row { display:flex;flex-direction:column;align-items:center;margin-bottom:1.5%; }
-  .date-solar { font-size:clamp(1rem,3.5vw,1.8rem);font-weight:400;letter-spacing:.12em;opacity:.9; }
-  .date-lunar { font-size:clamp(.85rem,2.8vw,1.4rem);font-weight:300;opacity:.65;margin-top:.2em;letter-spacing:.08em; }
-  .time { font-size:clamp(3.5rem,20vw,9rem);font-weight:700;line-height:1;letter-spacing:.05em;margin-bottom:.5%;font-variant-numeric:tabular-nums; }
-  .time .seconds { font-size:.35em;font-weight:300;opacity:.6;vertical-align:super;margin-left:.1em; }
-  .festival-badge { display:inline-block;font-size:clamp(.85rem,2.8vw,1.4rem);font-weight:500;padding:.3em 1.2em;border-radius:30px;background:rgba(255,215,0,.20);border:1px solid rgba(255,215,0,.30);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:1.5%;letter-spacing:.05em; }
+
+  /* 左右佈局 */
+  .layout {
+    position: relative; z-index: 2;
+    display: flex; width: 100%; height: 100%;
+    padding: 2% 3%;
+    text-shadow: 0 2px 20px rgba(0,0,0,.25);
+  }
+
+  /* ========== 左側 ========== */
+  .left-panel {
+    flex: 0 0 55%;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    padding: 2% 4%;
+  }
+  .date-solar { font-size:clamp(1rem,3vw,1.6rem);font-weight:400;letter-spacing:.10em;opacity:.9;margin-bottom:.3em; }
+  .date-lunar { font-size:clamp(.8rem,2.4vw,1.2rem);font-weight:300;opacity:.65;margin-bottom:.3em;letter-spacing:.06em; }
+  .festival-badge {
+    display:inline-block;font-size:clamp(.75rem,2.2vw,1.1rem);font-weight:500;
+    padding:.2em 1em;border-radius:30px;margin-bottom:.8em;
+    background:rgba(255,215,0,.20);border:1px solid rgba(255,215,0,.30);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);letter-spacing:.04em;
+  }
   .festival-badge.holiday { background:rgba(255,107,107,.20);border-color:rgba(255,107,107,.35); }
   .festival-badge.none { display:none; }
-  .weather-row { display:flex;align-items:center;gap:3%;padding:1.2% 5%;border-radius:40px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.12);margin-bottom:1.2%; }
-  .weather-icon { font-size:clamp(2rem,7vw,3.8rem);line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15)); }
-  .weather-temp { font-size:clamp(1.6rem,6vw,3rem);font-weight:600;line-height:1; }
+
+  .time { font-size:clamp(3rem,16vw,7rem);font-weight:700;line-height:1;letter-spacing:.04em;margin-bottom:.5em;font-variant-numeric:tabular-nums; }
+  .time .seconds { font-size:.35em;font-weight:300;opacity:.6;vertical-align:super;margin-left:.08em; }
+
+  .weather-row {
+    display:flex;align-items:center;gap:2.5%;
+    padding:.8em 2em;border-radius:36px;margin-bottom:.4em;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+  }
+  .weather-icon { font-size:clamp(1.8rem,5.5vw,3.2rem);line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15)); }
+  .weather-temp { font-size:clamp(1.4rem,5vw,2.6rem);font-weight:600;line-height:1; }
   .weather-temp .celsius { font-size:.5em;font-weight:300;opacity:.7; }
-  .weather-desc { font-size:clamp(.8rem,2.5vw,1.2rem);font-weight:400;opacity:.8;letter-spacing:.05em; }
-  .weather-extras { display:flex;gap:10%;font-size:clamp(.65rem,2vw,1rem);opacity:.6;margin-top:.2em; }
-  .bottom-bar { display:flex;gap:4%;align-items:center;justify-content:center;font-size:clamp(.55rem,1.6vw,.8rem);opacity:.35;margin-top:.8%; }
-  @media(max-width:480px){.container{padding:8% 5%}.weather-row{padding:3% 6%}}
-  @media(min-width:768px)and(orientation:landscape){.container{flex-direction:row;flex-wrap:wrap;gap:2%}.time{margin-bottom:0}.weather-row{margin-bottom:0}}
+  .weather-desc { font-size:clamp(.75rem,2.2vw,1.1rem);font-weight:400;opacity:.8;letter-spacing:.04em; }
+  .weather-extras { display:flex;gap:8%;font-size:clamp(.6rem,1.8vw,.9rem);opacity:.6;margin-top:.15em; }
+
+  .bottom-left {
+    font-size:clamp(.5rem,1.4vw,.7rem);opacity:.3;margin-top:.5em;letter-spacing:.03em;
+  }
+
+  /* ========== 右側（待辦事項） ========== */
+  .right-panel {
+    flex: 0 0 45%;
+    display: flex; flex-direction: column;
+    padding: 2.5% 3% 2.5% 1%;
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    margin: 1.5% 0;
+  }
+
+  .todo-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 .5em .6em .5em;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    margin-bottom: .6em;
+  }
+  .todo-title {
+    font-size:clamp(1rem,2.8vw,1.5rem);font-weight:600;letter-spacing:.06em;
+  }
+  .todo-count {
+    font-size:clamp(.7rem,1.8vw,.9rem);opacity:.5;
+    background:rgba(255,255,255,.08);padding:.2em .8em;border-radius:16px;
+  }
+
+  .todo-list {
+    flex: 1; overflow-y: auto;
+    padding-right: .3em;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.15) transparent;
+  }
+  .todo-list::-webkit-scrollbar { width: 4px; }
+  .todo-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
+
+  .todo-item {
+    display: flex; align-items: center; gap: .6em;
+    padding: .5em .5em;
+    border-radius: 12px;
+    transition: background .2s;
+    font-size:clamp(.75rem,2vw,1rem);
+    margin-bottom: .15em;
+  }
+  .todo-item:hover { background: rgba(255,255,255,.05); }
+
+  .todo-check {
+    width: 1.1em; height: 1.1em; flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .todo-check.done {
+    background: rgba(100,220,100,.6);
+    border-color: rgba(100,220,100,.8);
+  }
+  .todo-check.done::after {
+    content: '✓'; font-size: .75em; color: #fff; font-weight: 700;
+  }
+
+  .todo-text {
+    flex: 1; line-height: 1.4;
+    word-break: break-word;
+  }
+  .todo-text.done {
+    text-decoration: line-through; opacity: .45;
+  }
+
+  .todo-tag {
+    font-size: .6em; padding: .15em .6em; border-radius: 10px;
+    flex-shrink: 0; letter-spacing: .03em;
+  }
+  .tag-work    { background: rgba(54,162,235,.30); }
+  .tag-personal{ background: rgba(255,206,86,.25); }
+  .tag-urgent  { background: rgba(255,99,132,.30); }
+  .tag-other   { background: rgba(153,102,255,.25); }
+
+  .todo-add {
+    display: flex; gap: .5em; margin-top: .6em; padding: 0 .3em;
+  }
+  .todo-add-input {
+    flex: 1;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: .5em .8em;
+    color: #fff; font-size:clamp(.7rem,1.8vw,.9rem);
+    font-family: inherit; outline: none;
+    transition: border .2s;
+  }
+  .todo-add-input::placeholder { color: rgba(255,255,255,.3); }
+  .todo-add-input:focus { border-color: rgba(255,255,255,.3); }
+
+  .todo-add-btn {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px; padding: .4em .9em;
+    color: #fff; font-size:clamp(.7rem,1.8vw,.9rem);
+    cursor: pointer; transition: background .2s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .todo-add-btn:hover { background: rgba(255,255,255,.20); }
+
+  .todo-empty {
+    text-align: center; opacity: .3; font-size:clamp(.7rem,1.8vw,.9rem);
+    padding: 2em 0; letter-spacing:.04em;
+  }
+
+  /* ===== 響應式 - 直立手機 ===== */
+  @media (max-width: 600px) {
+    .layout { flex-direction: column; padding: 3% 4%; }
+    .left-panel { flex: none; padding: 1% 0; align-items: center; }
+    .right-panel { flex: 1; padding: 4% 4%; margin: 2% 0 0 0; }
+  }
 </style>
 </head>
 <body>
 <div class="bg-layer" id="bgLayer"></div>
 <div class="particles" id="particles"></div>
-<div class="container">
-  <div class="date-row">
+
+<div class="layout">
+  <!-- ====== 左側 ====== -->
+  <div class="left-panel">
     <div class="date-solar" id="dateSolar"></div>
     <div class="date-lunar" id="dateLunar">載入中…</div>
+    <div class="festival-badge none" id="festivalBadge">🎉 </div>
+
+    <div class="time">
+      <span id="hours">--</span>:<span id="minutes">--</span><span class="seconds" id="seconds">--</span>
+    </div>
+
+    <div class="weather-row">
+      <div class="weather-icon" id="weatherIcon">🌤️</div>
+      <div>
+        <div class="weather-temp"><span id="temp">--</span><span class="celsius">°C</span></div>
+        <div class="weather-desc" id="weatherDesc">載入中…</div>
+        <div class="weather-extras"><span>💧 <span id="humidity">--</span>%</span><span>🌬️ <span id="windSpeed">--</span> km/h</span></div>
+      </div>
+    </div>
+
+    <div class="bottom-left"><span>📍 台南</span>　<span>🔄 <span id="lastUpdate">--</span></span></div>
   </div>
-  <div class="festival-badge none" id="festivalBadge">🎉 </div>
-  <div class="time"><span id="hours">--</span>:<span id="minutes">--</span><span class="seconds" id="seconds">--</span></div>
-  <div class="weather-row" id="weatherCard">
-    <div class="weather-icon" id="weatherIcon">🌤️</div>
-    <div>
-      <div class="weather-temp"><span id="temp">--</span><span class="celsius">°C</span></div>
-      <div class="weather-desc" id="weatherDesc">載入中…</div>
-      <div class="weather-extras"><span>💧 <span id="humidity">--</span>%</span><span>🌬️ <span id="windSpeed">--</span> km/h</span></div>
+
+  <!-- ====== 右側 ====== -->
+  <div class="right-panel" id="todoPanel">
+    <div class="todo-header">
+      <span class="todo-title">📋 待辦事項</span>
+      <span class="todo-count" id="todoCount">0 項</span>
+    </div>
+
+    <div class="todo-list" id="todoList">
+      <div class="todo-empty">暫無待辦事項<br>下方輸入新增 ✏️</div>
+    </div>
+
+    <div class="todo-add">
+      <input class="todo-add-input" id="todoInput" placeholder="新增待辦事項..." maxlength="120">
+      <button class="todo-add-btn" id="todoAddBtn">＋ 新增</button>
     </div>
   </div>
-  <div class="bottom-bar"><span>📍 台南</span><span>🔄 <span id="lastUpdate">--</span></span></div>
 </div>
 
 <script>
+// ============================================================
+// 萬年曆 & 時鐘 & 天氣 (同前，略縮)
+// ============================================================
 const $=id=>document.getElementById(id);
 const bgLayer=$('bgLayer'),dateSolar=$('dateSolar'),dateLunar=$('dateLunar'),festivalEl=$('festivalBadge');
 const hoursEl=$('hours'),minutesEl=$('minutes'),secondsEl=$('seconds');
@@ -74,229 +242,150 @@ const humidityEl=$('humidity'),windEl=$('windSpeed'),updateEl=$('lastUpdate');
 const SOLAR_FEST={'1/1':'🔴 元旦','2/28':'🔴 和平紀念日','3/8':'🎉 婦女節','3/12':'🎉 植樹節','4/4':'🎉 兒童節','5/1':'🔴 勞動節','9/3':'🎉 軍人節','9/28':'🎉 教師節','10/10':'🔴 國慶日','10/25':'🎉 臺灣光復節','11/12':'🎉 國父誕辰','12/25':'🎉 行憲紀念日'};
 const LUNAR_FEST_NM={'1/1':'🔴 春節','1/9':'🎉 天公生','1/15':'🎉 元宵節','2/2':'🎉 龍抬頭','3/3':'🎉 上巳節','4/8':'🎉 浴佛節','5/5':'🔴 端午節','7/7':'🎉 七夕','7/15':'🎉 中元節','8/15':'🔴 中秋節','9/9':'🎉 重陽節','12/8':'🎉 臘八節','12/16':'🎉 尾牙','12/24':'🎉 送神','12/30':'🔴 除夕','12/29':'🔴 除夕'};
 
-// ============= 農曆轉換（查表法）- 1900-2100 =============
-// 每個月1號的對應農曆資料，預先計算好
-// 格式：[年, 月, 日, 農曆年, 農曆月, 農曆日, 是否閏月]
-// 或者動態計算
-
-// 使用經典農曆編碼（修正版）
-// 每年編碼: bit19-16=閏月(0=無), bit20=閏月大小, bit11-0=1-12月大小(1=30,0=29)
-const LI = [
-  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
-  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
-  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
-  0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
-  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
-  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
-  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
-  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
-  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
-  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
-  0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
-  0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
-  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
-  0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
-  0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
-  0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06a20,0x1a6c4,0x0aae0,
-  0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
-  0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
-  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
-  0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252,
-];
-
-// LI[0]=農曆1900年(庚子) = 公曆1900/1/31開始
-// 每個農曆年正月初一對應的公曆日期
-const NY = [
- [1900,1,31],[1901,2,19],[1902,2,8],[1903,1,29],[1904,2,16],[1905,2,4],[1906,1,25],[1907,2,13],[1908,2,2],[1909,1,22],
- [1910,2,10],[1911,1,30],[1912,2,18],[1913,2,6],[1914,1,26],[1915,2,14],[1916,2,3],[1917,1,23],[1918,2,11],[1919,2,1],
- [1920,2,20],[1921,2,8],[1922,1,28],[1923,2,16],[1924,2,5],[1925,1,24],[1926,2,13],[1927,2,2],[1928,1,23],[1929,2,10],
- [1930,1,30],[1931,2,17],[1932,2,6],[1933,1,26],[1934,2,14],[1935,2,4],[1936,1,24],[1937,2,11],[1938,1,31],[1939,2,19],
- [1940,2,8],[1941,1,27],[1942,2,15],[1943,2,5],[1944,1,25],[1945,2,13],[1946,2,2],[1947,1,22],[1948,2,10],[1949,1,29],
- [1950,2,17],[1951,2,6],[1952,1,27],[1953,2,14],[1954,2,3],[1955,1,24],[1956,2,12],[1957,1,31],[1958,2,18],[1959,2,8],
- [1960,1,28],[1961,2,15],[1962,2,5],[1963,1,25],[1964,2,13],[1965,2,2],[1966,1,21],[1967,2,9],[1968,1,30],[1969,2,17],
- [1970,2,6],[1971,1,27],[1972,2,15],[1973,2,3],[1974,1,23],[1975,2,11],[1976,1,31],[1977,2,18],[1978,2,7],[1979,1,28],
- [1980,2,16],[1981,2,5],[1982,1,25],[1983,2,13],[1984,2,2],[1985,2,20],[1986,2,9],[1987,1,29],[1988,2,17],[1989,2,6],
- [1990,1,27],[1991,2,15],[1992,2,4],[1993,1,23],[1994,2,10],[1995,1,31],[1996,2,19],[1997,2,7],[1998,1,28],[1999,2,16],
- [2000,2,5],[2001,1,24],[2002,2,12],[2003,2,1],[2004,1,22],[2005,2,9],[2006,1,29],[2007,2,18],[2008,2,7],[2009,1,26],
- [2010,2,14],[2011,2,3],[2012,1,23],[2013,2,10],[2014,1,31],[2015,2,19],[2016,2,8],[2017,1,28],[2018,2,16],[2019,2,5],
- [2020,1,25],[2021,2,12],[2022,2,1],[2023,1,22],[2024,2,10],[2025,1,29],[2026,2,17],[2027,2,6],[2028,1,26],[2029,2,13],
- [2030,2,3],[2031,1,23],[2032,2,11],[2033,1,31],[2034,2,19],[2035,2,8],[2036,1,28],[2037,2,15],[2038,2,4],[2039,1,24],
- [2040,2,12],[2041,2,1],[2042,1,22],[2043,2,10],[2044,1,29],[2045,2,17],[2046,2,6],[2047,1,26],[2048,2,14],[2049,2,2],
- [2050,1,23],[2051,2,11],[2052,1,31],[2053,2,18],[2054,2,7],[2055,1,28],[2056,2,15],[2057,2,4],[2058,1,24],[2059,2,11],
- [2060,2,1],[2061,1,21],[2062,2,9],[2063,1,29],[2064,2,17],[2065,2,5],[2066,1,26],[2067,2,14],[2068,2,3],[2069,1,23],
- [2070,2,11],[2071,1,31],[2072,2,19],[2073,2,7],[2074,1,27],[2075,2,15],[2076,2,5],[2077,1,24],[2078,2,12],[2079,2,2],
- [2080,1,22],[2081,2,9],[2082,1,29],[2083,2,17],[2084,2,6],[2085,1,26],[2086,2,14],[2087,2,3],[2088,1,24],[2089,2,10],
- [2090,1,30],[2091,2,18],[2092,2,7],[2093,1,27],[2094,2,15],[2095,2,5],[2096,1,25],[2097,2,12],[2098,2,1],[2099,1,21],
-];
-
+const LI=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06a20,0x1a6c4,0x0aae0,0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a4d0,0x0d150,0x0f252];
+const NY=[[1900,1,31],[1901,2,19],[1902,2,8],[1903,1,29],[1904,2,16],[1905,2,4],[1906,1,25],[1907,2,13],[1908,2,2],[1909,1,22],[1910,2,10],[1911,1,30],[1912,2,18],[1913,2,6],[1914,1,26],[1915,2,14],[1916,2,3],[1917,1,23],[1918,2,11],[1919,2,1],[1920,2,20],[1921,2,8],[1922,1,28],[1923,2,16],[1924,2,5],[1925,1,24],[1926,2,13],[1927,2,2],[1928,1,23],[1929,2,10],[1930,1,30],[1931,2,17],[1932,2,6],[1933,1,26],[1934,2,14],[1935,2,4],[1936,1,24],[1937,2,11],[1938,1,31],[1939,2,19],[1940,2,8],[1941,1,27],[1942,2,15],[1943,2,5],[1944,1,25],[1945,2,13],[1946,2,2],[1947,1,22],[1948,2,10],[1949,1,29],[1950,2,17],[1951,2,6],[1952,1,27],[1953,2,14],[1954,2,3],[1955,1,24],[1956,2,12],[1957,1,31],[1958,2,18],[1959,2,8],[1960,1,28],[1961,2,15],[1962,2,5],[1963,1,25],[1964,2,13],[1965,2,2],[1966,1,21],[1967,2,9],[1968,1,30],[1969,2,17],[1970,2,6],[1971,1,27],[1972,2,15],[1973,2,3],[1974,1,23],[1975,2,11],[1976,1,31],[1977,2,18],[1978,2,7],[1979,1,28],[1980,2,16],[1981,2,5],[1982,1,25],[1983,2,13],[1984,2,2],[1985,2,20],[1986,2,9],[1987,1,29],[1988,2,17],[1989,2,6],[1990,1,27],[1991,2,15],[1992,2,4],[1993,1,23],[1994,2,10],[1995,1,31],[1996,2,19],[1997,2,7],[1998,1,28],[1999,2,16],[2000,2,5],[2001,1,24],[2002,2,12],[2003,2,1],[2004,1,22],[2005,2,9],[2006,1,29],[2007,2,18],[2008,2,7],[2009,1,26],[2010,2,14],[2011,2,3],[2012,1,23],[2013,2,10],[2014,1,31],[2015,2,19],[2016,2,8],[2017,1,28],[2018,2,16],[2019,2,5],[2020,1,25],[2021,2,12],[2022,2,1],[2023,1,22],[2024,2,10],[2025,1,29],[2026,2,17],[2027,2,6],[2028,1,26],[2029,2,13],[2030,2,3],[2031,1,23],[2032,2,11],[2033,1,31],[2034,2,19],[2035,2,8],[2036,1,28],[2037,2,15],[2038,2,4],[2039,1,24],[2040,2,12],[2041,2,1],[2042,1,22],[2043,2,10],[2044,1,29],[2045,2,17],[2046,2,6],[2047,1,26],[2048,2,14],[2049,2,2],[2050,1,23],[2051,2,11],[2052,1,31],[2053,2,18],[2054,2,7],[2055,1,28],[2056,2,15],[2057,2,4],[2058,1,24],[2059,2,11],[2060,2,1],[2061,1,21],[2062,2,9],[2063,1,29],[2064,2,17],[2065,2,5],[2066,1,26],[2067,2,14],[2068,2,3],[2069,1,23],[2070,2,11],[2071,1,31],[2072,2,19],[2073,2,7],[2074,1,27],[2075,2,15],[2076,2,5],[2077,1,24],[2078,2,12],[2079,2,2],[2080,1,22],[2081,2,9],[2082,1,29],[2083,2,17],[2084,2,6],[2085,1,26],[2086,2,14],[2087,2,3],[2088,1,24],[2089,2,10],[2090,1,30],[2091,2,18],[2092,2,7],[2093,1,27],[2094,2,15],[2095,2,5],[2096,1,25],[2097,2,12],[2098,2,1],[2099,1,21]];
 const LMON=['正','二','三','四','五','六','七','八','九','十','冬','臘'];
-const LDAY=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
-  '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
-  '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
-const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-const SX=['鼠','牛','虎','兔','龍','蛇','馬','羊','猴','雞','狗','豬'];
+const LDAY=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+const TG=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];const DZ=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];const SX=['鼠','牛','虎','兔','龍','蛇','馬','羊','猴','雞','狗','豬'];
 
-// 儒略日
-function JD(y,m,d) {
-  if(m<=2){y--;m+=12;}
-  var A=Math.floor(y/100),B=2-A+Math.floor(A/4);
-  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;
-}
+function JD(y,m,d){if(m<=2){y--;m+=12;}var A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+B-1524.5;}
+function md(idx,mi,leap){var info=LI[idx];if(leap) return ((info>>20)&1)?30:29;return ((info>>(11-(mi-1)))&1)?30:29;}
+function gl(idx){return(LI[idx]>>16)&0xF;}
 
-// 農曆年天數
-function yearDays(idx){
-  var info=LI[idx],sum=0;
-  for(var i=0;i<12;i++) sum+=((info>>(11-i))&1)?30:29;
-  var leap=(info>>16)&0xF;
-  if(leap>0) sum+=((info>>20)&1)?30:29;
-  return sum;
-}
-
-// 某月天數
-function monthDays(idx,mi,leap){
-  var info=LI[idx];
-  if(leap) return ((info>>20)&1)?30:29;
-  return ((info>>(11-(mi-1)))&1)?30:29;
-}
-
-// 閏月
-function getLeap(idx){
-  return (LI[idx]>>16)&0xF;
-}
-
-// 公曆 → 農曆
 function s2l(sy,sm,sd){
-  // 先找最近的下一個農曆年正月初一前
-  var targetJD=JD(sy,sm,sd);
-  var ly=1900, idx=0;
-
-  // 找正月初一 <= targetJD 的最後一個農曆年
-  while(idx<NY.length-1 && JD(NY[idx+1][0],NY[idx+1][1],NY[idx+1][2])<=targetJD){
-    idx++;
-    ly++;
-  }
-
-  var ny=NY[idx]; // 農曆ly年正月初一的公曆日期
-  var startJD=JD(ny[0],ny[1],ny[2]);
-  var offset=Math.round(targetJD-startJD); // 距正月初一的天數
-
-  // 遍歷月份
-  var info=LI[idx];
-  var leap=getLeap(idx);
-  var lm=1, isLeap=false;
-  var remaining=offset;
-
-  for(var i=1;i<=12;i++){
-    var md=monthDays(idx,i,false);
-    if(remaining<md){ lm=i; break; }
-    remaining-=md;
-    if(leap===i){
-      var ld=monthDays(idx,i,true);
-      if(remaining<ld){ lm=i; isLeap=true; break; }
-      remaining-=ld;
-    }
-    if(i===12){ lm=1; } // 到年底（實際上不會發生，offset 不應超過全年）
-  }
-
-  var lday=remaining+1;
-  // 安全處理
-  if(lday<1||lday>30){ lm=1; lday=1; }
-
-  // 干支
-  var gzN=(ly-4)%10; if(gzN<0)gzN+=10;
-  var gzE=(ly-4)%12; if(gzE<0)gzE+=12;
-  var gzY=TG[gzN]+DZ[gzE];
-  var sx=SX[gzE];
-
-  var dgz=Math.floor(targetJD+0.5)%60; if(dgz<0)dgz+=60;
-  var dg=dgz%10,dz2=dgz%12;
-  var gzD=TG[dg]+DZ[dz2]+'日';
-
-  var jq=getJieQi(sy,sm,sd);
-
-  return {year:ly,month:lm,day:lday,isLeap:isLeap,ganZhiYear:gzY+'('+sx+')',ganZhiDay:gzD,jieQi:jq};
+  var tj=JD(sy,sm,sd),ly=1900,idx=0;
+  while(idx<NY.length-1&&JD(NY[idx+1][0],NY[idx+1][1],NY[idx+1][2])<=tj){idx++;ly++;}
+  var startJD=JD(NY[idx][0],NY[idx][1],NY[idx][2]),off=Math.round(tj-startJD);
+  var info=LI[idx],leap=gl(idx),lm=1,isleap=false,rem=off;
+  for(var i=1;i<=12;i++){var mdd=md(idx,i,false);if(rem<mdd){lm=i;break;}rem-=mdd;if(leap===i){var ld=md(idx,i,true);if(rem<ld){lm=i;isleap=true;break;}rem-=ld;}if(i===12) lm=1;}
+  var ld=rem+1;if(ld<1||ld>30){lm=1;ld=1;}
+  var gn=(ly-4)%10;if(gn<0)gn+=10;var ge=(ly-4)%12;if(ge<0)ge+=12;
+  var dgz=Math.floor(tj+0.5)%60;if(dgz<0)dgz+=60;
+  return {year:ly,month:lm,day:ld,isLeap:isleap,gzY:TG[gn]+DZ[ge],sx:SX[ge],gzD:TG[dgz%10]+DZ[dgz%12]+'日',jq:getJQ(sy,sm,sd)};
 }
 
-function getJieQi(y,m,d){
-  var n=['立春','雨水','驚蟄','春分','清明','穀雨','立夏','小滿','芒種','夏至','小暑','大暑',
-    '立秋','處暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至','小寒','大寒'];
-  var b=[[2,3],[2,18],[3,5],[3,20],[4,4],[4,20],[5,5],[5,21],[6,5],[6,21],[7,7],[7,22],
-    [8,7],[8,23],[9,7],[9,23],[10,8],[10,23],[11,7],[11,22],[12,7],[12,21],[1,5],[1,20]];
-  var o=Math.round((y-2025)*0.2422);
-  for(var i=0;i<24;i++){ if(b[i][0]===m&&Math.round(b[i][1]+o)===d) return n[i]; }
-  return null;
-}
-
-function getFest(sm,sd,lm,ld,isLeap,jq){
-  var k=sm+'/'+sd;
-  if(SOLAR_FEST[k]) return SOLAR_FEST[k];
-  if(!isLeap){ var lk=lm+'/'+ld; if(LUNAR_FEST_NM[lk]) return LUNAR_FEST_NM[lk]; }
-  if(jq) return '🎋 '+jq;
-  return null;
-}
-
-function bgClass(h){
-  if(h>=5&&h<8) return 'bg-dawn';
-  if(h>=8&&h<17) return 'bg-day';
-  if(h>=17&&h<19) return 'bg-sunset';
-  return 'bg-night';
-}
+function getJQ(y,m,d){var n=['立春','雨水','驚蟄','春分','清明','穀雨','立夏','小滿','芒種','夏至','小暑','大暑','立秋','處暑','白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至','小寒','大寒'];var b=[[2,3],[2,18],[3,5],[3,20],[4,4],[4,20],[5,5],[5,21],[6,5],[6,21],[7,7],[7,22],[8,7],[8,23],[9,7],[9,23],[10,8],[10,23],[11,7],[11,22],[12,7],[12,21],[1,5],[1,20]];var o=Math.round((y-2025)*0.2422);for(var i=0;i<24;i++){if(b[i][0]===m&&Math.round(b[i][1]+o)===d)return n[i];}return null;}
+function getFest(sm,sd,lm,ld,il,jq){var k=sm+'/'+sd;if(SOLAR_FEST[k])return SOLAR_FEST[k];if(!il){var lk=lm+'/'+ld;if(LUNAR_FEST_NM[lk])return LUNAR_FEST_NM[lk];}if(jq)return '🎋 '+jq;return null;}
+function bgC(h){if(h>=5&&h<8)return'bg-dawn';if(h>=8&&h<17)return'bg-day';if(h>=17&&h<19)return'bg-sunset';return'bg-night';}
 function P2(n){return String(n).padStart(2,'0');}
 
 function updateClock(){
-  var n=new Date();
-  var h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
-  bgLayer.className='bg-layer '+bgClass(h);
-  h=h%12||12;
-  hoursEl.textContent=P2(h); minutesEl.textContent=P2(m); secondsEl.textContent=P2(s);
-
-  var wd=['日','一','二','三','四','五','六'];
-  var y=n.getFullYear(),mo=n.getMonth()+1,d=n.getDate();
+  var n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
+  bgLayer.className='bg-layer '+bgC(h);h=h%12||12;
+  hoursEl.textContent=P2(h);minutesEl.textContent=P2(m);secondsEl.textContent=P2(s);
+  var wd=['日','一','二','三','四','五','六'],y=n.getFullYear(),mo=n.getMonth()+1,d=n.getDate();
   dateSolar.textContent=y+'年'+mo+'月'+d+'日 星期'+wd[n.getDay()];
-
   var l=s2l(y,mo,d);
-  if(l){
-    var ms=(l.isLeap?'閏':'')+LMON[l.month-1];
-    var ds=LDAY[l.day-1]||l.day+'日';
-    dateLunar.textContent='農曆 '+l.ganZhiYear+'年 '+ms+'月'+ds+'  '+l.ganZhiDay;
-
-    var f=getFest(mo,d,l.month,l.day,l.isLeap,l.jieQi);
-    if(f){
-      festivalEl.textContent=f;
-      festivalEl.className='festival-badge '+(f.startsWith('🔴')?'holiday':'festival');
-    } else festivalEl.className='festival-badge none';
-  }
+  if(l){var ms=(l.isLeap?'閏':'')+LMON[l.month-1],ds=LDAY[l.day-1]||l.day+'日';dateLunar.textContent='農曆 '+l.gzY+'('+l.sx+')年 '+ms+'月'+ds+'  '+l.gzD;var f=getFest(mo,d,l.month,l.day,l.isLeap,l.jq);if(f){festivalEl.textContent=f;festivalEl.className='festival-badge '+(f.startsWith('🔴')?'holiday':'festival');}else festivalEl.className='festival-badge none';}
 }
 
 async function updateWeather(){
   iconEl.textContent='';tempEl.textContent='--';descEl.textContent='更新中…';humidityEl.textContent='--';windEl.textContent='';
-  try{
-    var r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.9997&longitude=120.2270&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FTaipei&forecast_days=1');
-    if(!r.ok) throw Error();
-    var c=(await r.json()).current;
-    var wc=c.weather_code;
-    var i=wc===0?['☀️','晴朗']:wc===1?['🌤️','晴時多雲']:wc===2?['⛅','多雲時晴']:wc===3?['☁️','陰天']:wc<=19?['🌫️','霧霾']:wc<=29?['🌧️','陣雨']:wc<=39?['⛈️','雷雨']:wc<=49?['🌫️','濃霧']:wc<=59?['🌧️','毛毛雨']:wc<=69?['🌧️','降雨']:wc<=84?['🌦️','陣雨']:wc<=99?['⛈️','強烈雷雨']:['🌤️','未知'];
-    iconEl.textContent=i[0]; tempEl.textContent=Math.round(c.temperature_2m);
-    descEl.textContent=i[1]+'（體感 '+Math.round(c.apparent_temperature)+'°）';
-    humidityEl.textContent=c.relative_humidity_2m; windEl.textContent=Math.round(c.wind_speed_10m)+' km/h';
-    var n2=new Date(); updateEl.textContent=n2.getHours()+':'+P2(n2.getMinutes());
+  try{var r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=22.9997&longitude=120.2270&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FTaipei&forecast_days=1');if(!r.ok)throw Error();var c=(await r.json()).current,wc=c.weather_code;var i=wc===0?['☀️','晴朗']:wc===1?['🌤️','晴時多雲']:wc===2?['⛅','多雲時晴']:wc===3?['☁️','陰天']:wc<=19?['🌫️','霧霾']:wc<=29?['🌧️','陣雨']:wc<=39?['⛈️','雷雨']:wc<=49?['🌫️','濃霧']:wc<=59?['🌧️','毛毛雨']:wc<=69?['🌧️','降雨']:wc<=84?['🌦️','陣雨']:wc<=99?['⛈️','強烈雷雨']:['🌤️','未知'];iconEl.textContent=i[0];tempEl.textContent=Math.round(c.temperature_2m);descEl.textContent=i[1]+'（體感 '+Math.round(c.apparent_temperature)+'°）';humidityEl.textContent=c.relative_humidity_2m;windEl.textContent=Math.round(c.wind_speed_10m)+' km/h';var n2=new Date();updateEl.textContent=n2.getHours()+':'+P2(n2.getMinutes());
   }catch(e){descEl.textContent='⚠️ 連線失敗';iconEl.textContent='⚠️';}
 }
 
 function initParticles(){
   var c=$('particles');
-  for(var i=0;i<16;i++){
-    var p=document.createElement('div');p.className='particle';
-    var sz=2+Math.random()*6;p.style.width=sz+'px';p.style.height=sz+'px';
-    p.style.left=(5+Math.random()*90)+'%';
-    p.style.animationDuration=(10+Math.random()*25)+'s';p.style.animationDelay=(Math.random()*15)+'s';
-    c.appendChild(p);
-  }
+  for(var i=0;i<16;i++){var p=document.createElement('div');p.className='particle';var sz=2+Math.random()*6;p.style.width=sz+'px';p.style.height=sz+'px';p.style.left=(5+Math.random()*90)+'%';p.style.animationDuration=(10+Math.random()*25)+'s';p.style.animationDelay=(Math.random()*15)+'s';c.appendChild(p);}
 }
 
-updateClock(); updateWeather(); initParticles();
-setInterval(updateClock,500); setInterval(updateWeather,600000);
+// ============================================================
+// 待辦事項 (localStorage 持久化)
+// ============================================================
+const TODO_STORAGE_KEY = 'tainan_kiosk_todos';
+
+// 初始範例資料
+const DEFAULT_TODOS = [
+  { id: '1', text: '拜訪客戶 - 龍星顯示', done: false, tag: 'work' },
+  { id: '2', text: '整理報價單', done: false, tag: 'work' },
+  { id: '3', text: '採購 Mean Well 电源', done: true, tag: 'work' },
+  { id: '4', text: '買牛奶', done: false, tag: 'personal' },
+  { id: '5', text: '回覆供應商郵件', done: false, tag: 'urgent' },
+];
+
+let todos = [];
+
+function loadTodos() {
+  try {
+    var saved = localStorage.getItem(TODO_STORAGE_KEY);
+    if (saved) { todos = JSON.parse(saved); }
+    else { todos = DEFAULT_TODOS; saveTodos(); }
+  } catch(e) { todos = DEFAULT_TODOS; }
+  renderTodos();
+}
+
+function saveTodos() {
+  try { localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(todos)); }
+  catch(e) { /* ignore */ }
+}
+
+function renderTodos() {
+  var list = $('todoList');
+  var count = $('todoCount');
+  var doneCount = todos.filter(t => t.done).length;
+  count.textContent = todos.length + ' 項（' + doneCount + ' 完成）';
+
+  if (todos.length === 0) {
+    list.innerHTML = '<div class="todo-empty">暫無待辦事項<br>下方輸入新增 ✏️</div>';
+    return;
+  }
+
+  var html = '';
+  for (var i = 0; i < todos.length; i++) {
+    var t = todos[i];
+    var tagMap = { work: '工作', personal: '個人', urgent: '緊急', other: '其他' };
+    var tagClass = t.tag || 'other';
+    html += '<div class="todo-item" data-idx="' + i + '">'
+      + '<div class="todo-check' + (t.done ? ' done' : '') + '" data-idx="' + i + '"></div>'
+      + '<span class="todo-text' + (t.done ? ' done' : '') + '">' + escapeHtml(t.text) + '</span>'
+      + '<span class="todo-tag tag-' + tagClass + '">' + (tagMap[tagClass] || '其他') + '</span>'
+      + '</div>';
+  }
+  list.innerHTML = html;
+
+  // 點擊切換
+  list.querySelectorAll('.todo-check').forEach(function(el){
+    el.addEventListener('click', function(e){
+      var idx = parseInt(this.dataset.idx);
+      todos[idx].done = !todos[idx].done;
+      saveTodos(); renderTodos();
+      e.stopPropagation();
+    });
+  });
+  // 點擊項目切換
+  list.querySelectorAll('.todo-item').forEach(function(el){
+    el.addEventListener('click', function(e){
+      if (e.target.classList.contains('todo-check')) return;
+      var idx = parseInt(this.dataset.idx);
+      todos[idx].done = !todos[idx].done;
+      saveTodos(); renderTodos();
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addTodo() {
+  var input = $('todoInput');
+  var text = input.value.trim();
+  if (!text) return;
+  todos.unshift({ id: Date.now() + '', text: text, done: false, tag: 'other' });
+  input.value = '';
+  saveTodos(); renderTodos();
+}
+
+// 監聽 Enter
+$('todoInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') addTodo(); });
+$('todoAddBtn').addEventListener('click', addTodo);
+
+// ============================================================
+// 啟動
+// ============================================================
+updateClock(); updateWeather(); initParticles(); loadTodos();
+setInterval(updateClock, 500); setInterval(updateWeather, 600000);
 </script>
 </body>
 </html>

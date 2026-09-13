@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kiosk 時鐘天氣</title>
+<style>
+  /* ===== 全域重置 ===== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+    height: 100vh; width: 100vw;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    background: #0f0c29; /* fallback */
+    user-select: none; -webkit-user-select: none;
+  }
+
+  /* ===== 動態背景（日夜漸層） ===== */
+  .bg-layer {
+    position: fixed; inset: 0;
+    z-index: 0;
+    transition: background 1.5s ease;
+  }
+  /* 日間 */
+  .bg-day {
+    background: linear-gradient(145deg, #2193b0 0%, #6dd5ed 40%, #f7d794 80%, #f8b500 100%);
+  }
+  /* 日落 */
+  .bg-sunset {
+    background: linear-gradient(145deg, #fc4a1a 0%, #f7b733 40%, #fdc830 70%, #f5af19 100%);
+  }
+  /* 夜間 */
+  .bg-night {
+    background: linear-gradient(145deg, #0f0c29 0%, #302b63 40%, #24243e 70%, #1a1a2e 100%);
+  }
+  /* 清晨 */
+  .bg-dawn {
+    background: linear-gradient(145deg, #2c3e50 0%, #3498db 35%, #a8d8ea 65%, #fdcb6e 100%);
+  }
+
+  /* ===== 裝飾粒子 (漂浮光點) ===== */
+  .particles {
+    position: fixed; inset: 0; z-index: 1;
+    pointer-events: none;
+  }
+  .particle {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+  }
+
+  /* ===== 主容器 ===== */
+  .container {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+    padding: 6% 8%;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.25);
+  }
+
+  /* ===== 日期 ===== */
+  .date {
+    font-size: clamp(1rem, 3.5vw, 1.8rem);
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+    margin-bottom: 2%;
+  }
+
+  /* ===== 時間（核心） ===== */
+  .time {
+    font-size: clamp(3.5rem, 22vw, 10rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    margin-bottom: 4%;
+    font-variant-numeric: tabular-nums;
+  }
+  .time .seconds {
+    font-size: 0.35em;
+    font-weight: 300;
+    opacity: 0.6;
+    vertical-align: super;
+    margin-left: 0.1em;
+  }
+  .time .ampm {
+    font-size: 0.3em;
+    font-weight: 400;
+    opacity: 0.5;
+    vertical-align: super;
+    margin-left: 0.15em;
+  }
+
+  /* ===== 天氣區塊 ===== */
+  .weather-card {
+    display: flex; align-items: center; gap: 4%;
+    padding: 2% 6%;
+    border-radius: 40px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    margin-bottom: 3%;
+  }
+
+  .weather-icon {
+    font-size: clamp(2.5rem, 10vw, 5rem);
+    line-height: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+  }
+
+  .weather-info {
+    display: flex; flex-direction: column;
+  }
+
+  .weather-temp {
+    font-size: clamp(2rem, 8vw, 4rem);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .weather-temp .celsius {
+    font-size: 0.5em;
+    font-weight: 300;
+    opacity: 0.7;
+  }
+
+  .weather-desc {
+    font-size: clamp(0.9rem, 3vw, 1.4rem);
+    font-weight: 400;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+  }
+
+  .weather-extras {
+    display: flex; gap: 10%;
+    font-size: clamp(0.75rem, 2.5vw, 1.1rem);
+    opacity: 0.65;
+    margin-top: 0.3em;
+  }
+
+  /* ===== 更新時間標籤 ===== */
+  .update-label {
+    font-size: clamp(0.6rem, 1.8vw, 0.85rem);
+    opacity: 0.4;
+    margin-top: 2%;
+    letter-spacing: 0.03em;
+  }
+
+  /* ===== 載入動畫 ===== */
+  .loading {
+    display: inline-block;
+    width: 1em; height: 1em;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== 錯誤提示 ===== */
+  .error-msg {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+
+  /* ===== Responsive 微調 ===== */
+  @media (max-width: 480px) {
+    .container { padding: 10% 6%; }
+    .weather-card { padding: 4% 8%; }
+  }
+  @media (min-width: 768px) and (orientation: landscape) {
+    .container { flex-direction: row; gap: 6%; }
+    .time { margin-bottom: 0; }
+    .weather-card { margin-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景圖層 -->
+<div class="bg-layer" id="bgLayer"></div>
+
+<!-- 裝飾粒子 -->
+<div class="particles" id="particles"></div>
+
+<!-- 主內容 -->
+<div class="container">
+  <div class="date" id="dateDisplay"></div>
+  <div class="time" id="timeDisplay">
+    <span id="hours">--</span>:<span id="minutes">--</span><span class="seconds" id="seconds">--</span>
+  </div>
+
+  <div class="weather-card" id="weatherCard">
+    <div class="weather-icon" id="weatherIcon">🌤️</div>
+    <div class="weather-info">
+      <div class="weather-temp"><span id="temp">--</span><span class="celsius">°C</span></div>
+      <div class="weather-desc" id="weatherDesc">載入中…</div>
+      <div class="weather-extras">
+        <span>💧 <span id="humidity">--</span>%</span>
+        <span id="windDisplay">🌬️ <span id="windSpeed">--</span> km/h</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="update-label" id="updateLabel">🔄 <span id="lastUpdate">等待更新…</span></div>
+</div>
+
+<script>
+// ===== 設定 =====
+const CONFIG = {
+  city: '台南',
+  lat: 22.9997,
+  lon: 120.2270,
+  refreshInterval: 10 * 60 * 1000,  // 每10分鐘更新天氣
+  clockInterval: 500,               // 每秒2次更新時鐘（顯示秒數）
+  use24h: false,                    // 12小時制（true=24小時）
+  particlesCount: 18,
+};
+
+// ===== DOM =====
+const $ = id => document.getElementById(id);
+const bgLayer   = $('bgLayer');
+const dateDisp  = $('dateDisplay');
+const hoursEl   = $('hours');
+const minutesEl = $('minutes');
+const secondsEl = $('seconds');
+const tempEl    = $('temp');
+const descEl    = $('weatherDesc');
+const iconEl    = $('weatherIcon');
+const humidityEl= $('humidity');
+const windEl    = $('windSpeed');
+const updateLabel = $('lastUpdate');
+
+// ===== 背景時段判斷 =====
+function getBgClass(h) {
+  if (h >= 5 && h < 8)  return 'bg-dawn';
+  if (h >= 8 && h < 17) return 'bg-day';
+  if (h >= 17 && h < 19) return 'bg-sunset';
+  return 'bg-night';
+}
+
+// ===== 時鐘 =====
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+
+  // 背景
+  bgLayer.className = 'bg-layer ' + getBgClass(h);
+
+  // 12/24小時制
+  let ampm = '';
+  if (!CONFIG.use24h) {
+    ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+  }
+
+  hoursEl.textContent   = pad2(h);
+  minutesEl.textContent = pad2(m);
+  secondsEl.textContent = pad2(s);
+
+  // 日期（繁體中文）
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  const year  = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day   = now.getDate();
+  const wd    = weekDays[now.getDay()];
+  dateDisp.textContent = `${year}年${month}月${day}日 星期${wd}`;
+}
+
+// ===== Open-Meteo 天氣 API =====
+async function fetchWeather() {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Asia%2FTaipei&forecast_days=1`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.current;
+  } catch (err) {
+    console.error('Weather fetch error:', err);
+    return null;
+  }
+}
+
+// WMO Weather Codes → 天氣描述與 emoji
+function weatherCodeToInfo(code) {
+  if (code === 0) return { emoji: '☀️', desc: '晴朗' };
+  if (code === 1) return { emoji: '🌤️', desc: '晴時多雲' };
+  if (code === 2) return { emoji: '⛅', desc: '多雲時晴' };
+  if (code === 3) return { emoji: '☁️', desc: '陰天' };
+  if (code >= 4 && code <= 19) return { emoji: '🌫️', desc: '霧霾' };
+  if (code >= 20 && code <= 29) return { emoji: '🌧️', desc: '陣雨' };
+  if (code >= 30 && code <= 39) return { emoji: '⛈️', desc: '雷雨' };
+  if (code >= 40 && code <= 49) return { emoji: '🌫️', desc: '濃霧' };
+  if (code >= 50 && code <= 59) return { emoji: '🌧️', desc: '毛毛雨' };
+  if (code >= 60 && code <= 69) return { emoji: '🌧️', desc: '降雨' };
+  if (code >= 70 && code <= 79) return { emoji: '❄️', desc: '降雪' };
+  if (code >= 80 && code <= 84) return { emoji: '🌦️', desc: '陣雨' };
+  if (code >= 85 && code <= 86) return { emoji: '🌨️', desc: '陣雪' };
+  if (code >= 90 && code <= 99) return { emoji: '⛈️', desc: '強烈雷雨' };
+  return { emoji: '🌤️', desc: '未知' };
+}
+
+async function updateWeather() {
+  // 載入中狀態
+  iconEl.textContent  = '';
+  tempEl.textContent  = '--';
+  descEl.textContent  = '更新中…';
+  humidityEl.textContent = '--';
+  windEl.textContent  = '--';
+  updateLabel.textContent = '更新中…';
+
+  const current = await fetchWeather();
+  if (!current) {
+    descEl.textContent = '⚠️ 天氣資料連線失敗';
+    updateLabel.textContent = '更新失敗';
+    iconEl.textContent = '⚠️';
+    return;
+  }
+
+  const info = weatherCodeToInfo(current.weather_code);
+  iconEl.textContent     = info.emoji;
+  tempEl.textContent     = Math.round(current.temperature_2m);
+  descEl.textContent     = info.desc + `（體感 ${Math.round(current.apparent_temperature)}°）`;
+  humidityEl.textContent = current.relative_humidity_2m;
+  windEl.textContent     = Math.round(current.wind_speed_10m);
+
+  const now = new Date();
+  updateLabel.textContent = `${now.getHours()}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+}
+
+// ===== 裝飾粒子 =====
+function initParticles() {
+  const container = $('particles');
+  for (let i = 0; i < CONFIG.particlesCount; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 6;
+    p.style.width  = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left   = (5 + Math.random() * 90) + '%';
+    p.style.animationDuration  = (10 + Math.random() * 25) + 's';
+    p.style.animationDelay     = (Math.random() * 15) + 's';
+    container.appendChild(p);
+  }
+}
+
+// ===== 啟動 =====
+updateClock();
+updateWeather();
+initParticles();
+
+setInterval(updateClock, CONFIG.clockInterval);
+setInterval(updateWeather, CONFIG.refreshInterval);
+</script>
+</body>
+</html>
